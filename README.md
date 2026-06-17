@@ -108,6 +108,44 @@ journalctl --user -u phraks-auto.service -f  # logs
 > Adapter `WorkingDirectory` / `ExecStart` dans le `.service` si le dépôt
 > n'est pas dans `~/Documents/PHRAKS_AUTO`.
 
+### Variante : service système (root, ex. VPS)
+
+Quand on tourne en `root` et que le dépôt est ailleurs (ex.
+`/root/Remarkable_Phraks_sync`), un service **système** évite le `linger`.
+Deux pièges :
+
+- adapter `WorkingDirectory` / `ExecStart` / `EnvironmentFile` aux vrais chemins ;
+- ajouter `Environment=HOME=/root` : un service système n'hérite pas de `$HOME`,
+  et sans lui `rmapi` ne trouve pas sa conf (`failed to get config path`).
+
+```ini
+# /etc/systemd/system/phraks-auto.service
+[Unit]
+Description=Phrack -> reMarkable (téléchargement + PDF + upload)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=HOME=/root
+WorkingDirectory=/root/Remarkable_Phraks_sync
+ExecStart=/usr/bin/python3 /root/Remarkable_Phraks_sync/phraks_auto.py
+EnvironmentFile=-/root/Remarkable_Phraks_sync/phraks.env
+TimeoutStartSec=600
+```
+
+```sh
+# Copier aussi phraks-auto.timer dans /etc/systemd/system/, puis :
+systemctl daemon-reload
+systemctl enable --now phraks-auto.timer
+
+systemctl list-timers phraks-auto.timer
+systemctl start phraks-auto.service          # lancement immédiat
+journalctl -u phraks-auto.service -f         # logs
+```
+
+> `rmapi.conf` doit appartenir au même user que le service (ici `/root/.config/rmapi/`).
+
 ## Configuration
 
 Voir `config.example.env` → copier en `phraks.env` (lu par le service systemd).
