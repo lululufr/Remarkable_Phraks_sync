@@ -1,0 +1,11 @@
+[Unit]
+Description=Vérifie quotidiennement un nouveau numéro de Phrack
+
+[Timer]
+# Tous les jours à 08:00, avec rattrapage si la machine était éteinte.
+OnCalendar=*-*-* 08:00:00
+Persistent=true
+RandomizedDelaySec=900
+
+[Install]
+WantedBy=timers.target

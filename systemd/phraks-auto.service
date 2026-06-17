@@ -1,0 +1,17 @@
+[Unit]
+Description=Phrack -> reMarkable (téléchargement + EPUB + upload)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Adapter le chemin si le dépôt est ailleurs.
+WorkingDirectory=%h/Documents/PHRAKS_AUTO
+ExecStart=/usr/bin/python3 %h/Documents/PHRAKS_AUTO/phraks_auto.py
+# Fichier d'environnement optionnel (clés/chemins). Voir config.example.env.
+EnvironmentFile=-%h/Documents/PHRAKS_AUTO/phraks.env
+# Évite les exécutions qui se chevauchent.
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target
