@@ -361,7 +361,15 @@ def upload(files: list[Path], dest: str) -> None:
     ensure_dir(dest)
     for f in files:
         log.info("Upload %s -> %s", f.name, dest)
-        _rmapi("put", str(f), dest)
+        proc = _rmapi("put", str(f), dest, check=False)
+        if proc.returncode != 0 and "already exists" in (proc.stderr + proc.stdout):
+            # Le document existe déjà sur le cloud : on remplace son contenu.
+            log.info("%s existe déjà -> remplacement du contenu", f.name)
+            _rmapi("put", "--content-only", str(f), dest)
+        elif proc.returncode != 0:
+            raise RuntimeError(
+                f"rmapi put {f} {dest} a échoué ({proc.returncode}): "
+                f"{proc.stderr.strip() or proc.stdout.strip()}")
 
 
 def archive_current() -> None:
